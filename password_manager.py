@@ -1,6 +1,7 @@
 import json
 import random
 import string
+import sqlite3
 
 import typer
 from rich.prompt import Confirm
