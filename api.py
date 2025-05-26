@@ -1,10 +1,8 @@
+import random
+import string
+
 import sqlite3
-
-
-
-# make the password class
-# it creates the password object which creates login, encpassword, key
-# also has exits, save, delete, delete all functions
+from Crypto.Cipher import AES
 
 # con = sqlite3.connect("passwords.db")
 # cur = con.cursor()
@@ -23,9 +21,9 @@ class Password:
     def __init__(self, login: str, password: str):
         self.login = login
         self.password = password
-        # self.key = self._generate_key(self)
-        # self.encrypted_password = self.encrypt(self)
-
+        self.key = self._generate_key()
+        self.encrypted_password, self.e_cipher = self.encrypt()
+        self.decrypted_password = self.decrypt()
 
     def check(self, password):
         """
@@ -41,6 +39,7 @@ class Password:
         else:
             return "FAIR"
 
+    @staticmethod
     def _is_special_character(self, password):
         special_character = "&'(-_)#{[|@]}!:;,?§%$"
         for character in password:
@@ -56,27 +55,36 @@ class Password:
         """
         pass
 
-    def save(self, ):
+    def save(self):
         """
         saves the encrypted password along with its encryption key and login
         :return:
         """
         pass
 
+    @staticmethod
     def _generate_key(self):
         """
         generates a key to be used for AES
         :return:
         """
-        pass
+        key = "".join((random.choices(string.ascii_letters + string.digits, k=16)))
+        return key.encode("utf-8")
 
     def encrypt(self):
         """encrypts the password"""
-        pass
+        e_cipher = AES.new(self.key, AES.MODE_EAX)
+        e_data = e_cipher.encrypt(self.password.encode("utf-8"))
+        return e_data, e_cipher
 
     def decrypt(self):
-        pass
+        d_cipher = AES.new(self.key, AES.MODE_EAX, self.e_cipher.nonce)
+        d_data = d_cipher.decrypt(self.encrypted_password)
+        return d_data
+
 
 if __name__ == "__main__":
-    new_password = Password(login= "admin", password= "122345678903456783")
+    new_password = Password(login="admin", password="bonjour")
     print(new_password.check(new_password.password))
+    print(new_password.encrypted_password)
+    print(new_password.decrypted_password)
