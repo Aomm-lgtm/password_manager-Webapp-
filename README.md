@@ -11,7 +11,7 @@ A password manager website.
 ### [] can retrieve a password from the database
 - [] get password info
 - [] decrypt the password
-- [] give to password to the user
+- [] give password to the user
 
 ### [] can delete a password from the database
 - [] get the password info

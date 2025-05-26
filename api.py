@@ -8,6 +8,7 @@ con = sqlite3.connect("passwords.db")
 cur = con.cursor()
 cur.execute("CREATE TABLE IF NOT EXISTS passwords(login, encrypted password, key, nonce)")
 
+
 class Password:
     """
     A class to create and manage passwords
@@ -98,9 +99,15 @@ class Password:
         d_data = d_cipher.decrypt(self.encrypted_password)
         return d_data
 
+
 if __name__ == "__main__":
-    new_password = Password(login="admin", password="bonjour")
-    print(new_password.check())
-    print(new_password.encrypted_password)
-    print(new_password.decrypted_password)
-    new_password.save()
+    try:
+        new_password = Password(login="password", password="au revoir")
+        print(new_password.check())
+        print(new_password.encrypted_password)
+        print(new_password.decrypted_password)
+        new_password.save()
+    except Exception as e:
+        print(f"an error has occured: {e}")
+    finally:
+        con.close()
