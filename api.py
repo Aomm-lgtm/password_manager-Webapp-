@@ -4,9 +4,9 @@ import string
 import sqlite3
 from Crypto.Cipher import AES
 
-# con = sqlite3.connect("passwords.db")
-# cur = con.cursor()
-# cur.execute("CREATE TABLE passwords(login, encrypted password", "key")
+con = sqlite3.connect("passwords.db")
+cur = con.cursor()
+cur.execute("CREATE TABLE IF NOT EXISTS passwords(login, encrypted password, key, nonce)")
 
 class Password:
     """
@@ -21,31 +21,36 @@ class Password:
     def __init__(self, login: str, password: str):
         self.login = login
         self.password = password
-        self.key = self._generate_key()
-        self.encrypted_password, self.e_cipher = self.encrypt()
+        self.key = self._generate_key(self)
+        self.encrypted_password, self.nonce = self.encrypt()
         self.decrypted_password = self.decrypt()
 
-    def check(self, password):
+    def check(self):
         """
         checks if the password is strong enough before encryption
-        :param password: the password you want to save
-        :return:
+        :param: the password you want to save
+        :return: The Password's strength ('WEAK', 'FAIR' or 'STRONG')
         """
-        if len(password) <= 8 or password.isdigit():
+        if len(self.password) <= 8 or self.password.isdigit():
             return "WEAK"
 
-        elif len(password) > 16 and self._is_special_character(password):
+        elif len(self.password) > 16 and self._is_special_character(self.password):
             return "STRONG"
         else:
             return "FAIR"
 
     @staticmethod
-    def _is_special_character(self, password):
+    def _is_special_character(self) -> bool:
+        """
+        Checks the password for at least one special character
+        :param self:
+        :return: True if there is at least one special character, returns False otherwise
+        """
         special_character = "&'(-_)#{[|@]}!:;,?§%$"
-        for character in password:
+        for character in self.password:
             if character in special_character:
                 return True
-            return False
+        return False
 
     def exist(self, login):
         """
@@ -60,31 +65,42 @@ class Password:
         saves the encrypted password along with its encryption key and login
         :return:
         """
-        pass
+        cur.execute("""
+        INSERT INTO passwords VALUES
+        (?, ?, ?, ?)""", (self.login, self.encrypted_password, self.key, self.nonce))
+        con.commit()
 
     @staticmethod
-    def _generate_key(self):
+    def _generate_key(self) -> bytes:
         """
         generates a key to be used for AES
-        :return:
+        :return key: the key to be used for encryption and decryption of the password
         """
         key = "".join((random.choices(string.ascii_letters + string.digits, k=16)))
-        return key.encode("utf-8")
+        key = key.encode("utf-8")
+        return key
 
     def encrypt(self):
-        """encrypts the password"""
+        """
+        encrypts the password using AES
+        :return: the encrypted password
+        """
         e_cipher = AES.new(self.key, AES.MODE_EAX)
         e_data = e_cipher.encrypt(self.password.encode("utf-8"))
-        return e_data, e_cipher
+        return e_data, e_cipher.nonce
 
     def decrypt(self):
-        d_cipher = AES.new(self.key, AES.MODE_EAX, self.e_cipher.nonce)
+        """
+        decrypts the encrypted password using AES
+        :return: the original password
+        """
+        d_cipher = AES.new(self.key, AES.MODE_EAX, self.nonce)
         d_data = d_cipher.decrypt(self.encrypted_password)
         return d_data
 
-
 if __name__ == "__main__":
     new_password = Password(login="admin", password="bonjour")
-    print(new_password.check(new_password.password))
+    print(new_password.check())
     print(new_password.encrypted_password)
     print(new_password.decrypted_password)
+    new_password.save()

@@ -3,10 +3,10 @@
 A password manager website.
 
 ## Most basic functions (before making the website)
-### [] can store a password in the database
+### [x] can store a password in the database
 - [x] get the password info
 - [x] encrypt the password
-- [] store the password and its info in the database
+- [x] store the password and its info in the database
 
 ### [] can retrieve a password from the database
 - [] get password info
