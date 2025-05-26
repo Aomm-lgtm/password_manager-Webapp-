@@ -4,7 +4,7 @@ A password manager website.
 
 ## Most basic functions (before making the website)
 ### [] can store a password in the database
-- [] get the password info
+- [x] get the password info
 - [] encrypt the password
 - [] store the password and its info in the database
 
@@ -23,7 +23,6 @@ A password manager website.
 - [] ask for confirmation
 - [] delete everything
 
-## Important functions for security 
-- hashing
-- authentication 
+## Important functions for security
+- authentication (hashlib)
 - HTTPS
