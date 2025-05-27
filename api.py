@@ -25,7 +25,6 @@ class Password:
         self.password = password
         self.key = self._generate_key(self)
         self.encrypted_password, self.nonce = self.encrypt()
-        # self.decrypted_password = self.decrypt()
 
     def check(self):
         """
@@ -53,14 +52,6 @@ class Password:
             if character in special_character:
                 return True
         return False
-
-    def exist(self, login):
-        """
-        determines if the password exists
-        :param login:
-        :return:
-        """
-        pass
 
     def save(self):
         """
@@ -91,14 +82,6 @@ class Password:
         e_data = e_cipher.encrypt(self.password.encode("utf-8"))
         return e_data, e_cipher.nonce
 
-    # def decrypt(self):
-    #     """
-    #     decrypts the encrypted password using AES
-    #     :return: the original password
-    #     """
-    #     d_cipher = AES.new(self.key, AES.MODE_EAX, self.nonce)
-    #     d_data = d_cipher.decrypt(self.encrypted_password)
-    #     return d_data
 
     def retrieve_password(self):
         res = cur.execute("""
@@ -112,10 +95,42 @@ class Password:
             d_data = d_cipher.decrypt(encrypted_password)
             return d_data
 
+    def initialize_deletion(self):
+        """
+        returns token for deletion confirmation
+        :return:
+        """
+        pass
+
+    def delete_password(self, token):
+        """
+        sqlite doesn't return errors so use rowcount to check if password exists
+        syntax is DELETE FROM passwords
+        WHERE search_condition;
+        don't forget to commit
+
+        use token to confirm deletion if token different, don't do it
+        :return:
+        """
+        pass
+
+
+    def delete_all_passwords(self, token):
+        """
+        uses also the token to confirm deletion
+
+        syntax would be:
+        DELETE FROM passwords
+        don't forget to commit
+
+        :param token:
+        :return:
+        """
+        pass
 
 if __name__ == "__main__":
     try:
-        new_password = Password(info="new_password", login="password", password="au revoir")
+        new_password = Password(info="newer_password", login="pass", password="bonjour")
         print(new_password.check())
         print(new_password.encrypted_password)
         # print(new_password.decrypted_password)
