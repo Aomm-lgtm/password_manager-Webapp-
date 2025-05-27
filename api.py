@@ -6,25 +6,26 @@ from Crypto.Cipher import AES
 
 con = sqlite3.connect("passwords.db")
 cur = con.cursor()
-cur.execute("CREATE TABLE IF NOT EXISTS passwords(login, encrypted password, key, nonce)")
+cur.execute("CREATE TABLE IF NOT EXISTS passwords(info, login, encrypted password, key, nonce)")
 
 
 class Password:
     """
     A class to create and manage passwords
 
-    This class provides method to save in a database an ecrypted password and consult said database
+    This class provides methods to save in a database an ecrypted password and consult said database
 
     Attribute:
         password(str): the password to be managed
     """
 
-    def __init__(self, login: str, password: str):
+    def __init__(self, info: str,  login: str, password: str):
+        self.info = info
         self.login = login
         self.password = password
         self.key = self._generate_key(self)
         self.encrypted_password, self.nonce = self.encrypt()
-        self.decrypted_password = self.decrypt()
+        # self.decrypted_password = self.decrypt()
 
     def check(self):
         """
@@ -68,7 +69,7 @@ class Password:
         """
         cur.execute("""
         INSERT INTO passwords VALUES
-        (?, ?, ?, ?)""", (self.login, self.encrypted_password, self.key, self.nonce))
+        (?, ?, ?, ?, ?)""", (self.info, self.login, self.encrypted_password, self.key, self.nonce))
         con.commit()
 
     @staticmethod
@@ -90,23 +91,36 @@ class Password:
         e_data = e_cipher.encrypt(self.password.encode("utf-8"))
         return e_data, e_cipher.nonce
 
-    def decrypt(self):
-        """
-        decrypts the encrypted password using AES
-        :return: the original password
-        """
-        d_cipher = AES.new(self.key, AES.MODE_EAX, self.nonce)
-        d_data = d_cipher.decrypt(self.encrypted_password)
-        return d_data
+    # def decrypt(self):
+    #     """
+    #     decrypts the encrypted password using AES
+    #     :return: the original password
+    #     """
+    #     d_cipher = AES.new(self.key, AES.MODE_EAX, self.nonce)
+    #     d_data = d_cipher.decrypt(self.encrypted_password)
+    #     return d_data
+
+    def retrieve_password(self):
+        res = cur.execute("""
+        SELECT encrypted password, key, nonce
+        FROM passwords
+        WHERE info = ? AND login = ?""", (self.info, self.login))
+        result = res.fetchone()
+        if result:
+            encrypted_password, key, nonce = result
+            d_cipher = AES.new(key, AES.MODE_EAX, nonce)
+            d_data = d_cipher.decrypt(encrypted_password)
+            return d_data
 
 
 if __name__ == "__main__":
     try:
-        new_password = Password(login="password", password="au revoir")
+        new_password = Password(info="new_password", login="password", password="au revoir")
         print(new_password.check())
         print(new_password.encrypted_password)
-        print(new_password.decrypted_password)
+        # print(new_password.decrypted_password)
         new_password.save()
+        print(new_password.retrieve_password())
     except Exception as e:
         print(f"an error has occured: {e}")
     finally:

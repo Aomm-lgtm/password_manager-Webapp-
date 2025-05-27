@@ -8,10 +8,10 @@ A password manager website.
 - [x] encrypt the password
 - [x] store the password and its info in the database
 
-### [] can retrieve a password from the database
-- [] get password info
-- [] decrypt the password
-- [] give password to the user
+### [x] can retrieve a password from the database
+- [x] get password info
+- [x] decrypt the password
+- [x] give password to the user
 
 ### [] can delete a password from the database
 - [] get the password info
