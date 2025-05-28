@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 
 import sqlite3
@@ -25,6 +25,9 @@ class Password:
         self.password = password
         self.key = self._generate_key(self)
         self.encrypted_password, self.nonce = self.encrypt()
+        self.deletion_token = None
+        self.pending_deletion = False
+
 
     def check(self):
         """
@@ -69,9 +72,9 @@ class Password:
         generates a key to be used for AES
         :return key: the key to be used for encryption and decryption of the password
         """
-        key = "".join((random.choices(string.ascii_letters + string.digits, k=16)))
-        key = key.encode("utf-8")
-        return key
+        alphabet = string.ascii_letters + string.digits
+        key = ''.join(secrets.choice(alphabet) for i in range (16))
+        return key.encode('utf-8')
 
     def encrypt(self):
         """
@@ -95,14 +98,19 @@ class Password:
             d_data = d_cipher.decrypt(encrypted_password)
             return d_data
 
-    def initialize_deletion(self):
+    @staticmethod
+    def initialize_deletion():
         """
-        returns token for deletion confirmation
-        :return:
+        creates and returns a token to confirm deletion
+        :return: token that needs to be inputed to confirm deletion
         """
-        pass
+        alphabet = string.ascii_letters + string.digits
+        del_token = ''.join(secrets.choice(alphabet) for i in range(16))
+        pending_del = True
+        return del_token, pending_del
 
-    def delete_password(self, token):
+    @staticmethod
+    def delete_password(token: str, pending_del: bool, info: str, login: str):
         """
         sqlite doesn't return errors so use rowcount to check if password exists
         syntax is DELETE FROM passwords
@@ -112,10 +120,23 @@ class Password:
         use token to confirm deletion if token different, don't do it
         :return:
         """
-        pass
+        if pending_del and token == Password.initialize_deletion()[0] :
 
+            cur.execute("""
+            DELETE FROM passwords
+            WHERE info = ? AND login = ?""", (info, login))
+            if cur.rowcount == 0:
+                print("No password with that ID was found")
+            else:
+                print(f"The password related to the ID: info = {info}, login = {login} has been deleted. ")
 
-    def delete_all_passwords(self, token):
+            con.commit()
+
+        else:
+            print("Mismatched token or no pending deletion, the password will not be deleted")
+
+    @staticmethod
+    def delete_all_passwords(token, pending_del):
         """
         uses also the token to confirm deletion
 
@@ -126,17 +147,34 @@ class Password:
         :param token:
         :return:
         """
-        pass
+        if pending_del and token == Password.initialize_deletion()[0]:
+
+            cur.execute("""
+            DELETE FROM passwords""")
+            if cur.rowcount == 0:
+                print("No passwords were found in the database")
+            else:
+                print("The passwords were deleted from the database")
+
+            con.commit()
+
+        else:
+            print("Mismatched token or no pending deletion, the passwords will not be deleted")
 
 if __name__ == "__main__":
     try:
-        new_password = Password(info="newer_password", login="pass", password="bonjour")
-        print(new_password.check())
-        print(new_password.encrypted_password)
+        newer_password = Password(info="very new", login="yes", password="hola")
+        print(newer_password.check())
+        print(newer_password.encrypted_password)
         # print(new_password.decrypted_password)
-        new_password.save()
-        print(new_password.retrieve_password())
+        newer_password.save()
+        print(newer_password.retrieve_password())
+        deletion_token, pending_deletion = Password.initialize_deletion()
+        print(deletion_token)
+        # Password.delete_password(deletion_token, pending_deletion, newer_password.info, newer_password.login)
+
     except Exception as e:
         print(f"an error has occured: {e}")
     finally:
         con.close()
+        pending_deletion = False
